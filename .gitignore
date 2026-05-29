@@ -2,4 +2,12 @@ libs
 debs
 srcs
 list
-old_list
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+.pytest_cache/
+# Claude-related
+.claude/
+CLAUDE.md
+docs/
