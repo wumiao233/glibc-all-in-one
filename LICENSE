@@ -1,16 +1,27 @@
-MIT License
-
 Copyright (c) 2021 Matrix
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software is provided for personal, educational, and academic research
+purposes only.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to use,
+copy, modify, and distribute the Software, subject to the following conditions:
+
+1. Personal Use: You may use the Software for personal, non-commercial
+   purposes.
+
+2. Educational Use: You may use the Software for teaching, academic research,
+   and educational activities at recognized educational institutions.
+
+3. Security Research: You may use the Software for legitimate security
+   research, including capture-the-flag competitions, vulnerability research,
+   and security audits with proper authorization.
+
+Commercial Use Prohibited: You may NOT use the Software, in whole or in part,
+for any commercial purpose, including but not limited to: selling, licensing,
+or distributing the Software for a fee; incorporating the Software into a
+commercial product or service; using the Software to provide paid consulting
+or services.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
