@@ -3,13 +3,15 @@ import subprocess
 import tempfile
 import urllib.request
 
+from glibc_aio import paths
+
 
 def build(version: str, arch: str, image: str | None = None,
           prefix: str | None = None, no_docker: bool = False) -> str:
     from .toolchain import resolve_image, build_script, source_url
 
     if prefix is None:
-        prefix = os.path.abspath(f"libs/build/{version}/{arch}")
+        prefix = str(paths.libs_build() / version / arch)
     os.makedirs(prefix, exist_ok=True)
 
     if not no_docker:
@@ -41,10 +43,11 @@ def build(version: str, arch: str, image: str | None = None,
         finally:
             os.unlink(script_path)
     else:
-        src_dir = os.path.join("srcs", f"glibc-{version}")
+        srcs_dir = str(paths.srcs())
+        src_dir = os.path.join(srcs_dir, f"glibc-{version}")
         if not os.path.isdir(src_dir):
-            os.makedirs("srcs", exist_ok=True)
-            tarball = os.path.join("srcs", f"glibc-{version}.tar.gz")
+            os.makedirs(srcs_dir, exist_ok=True)
+            tarball = os.path.join(srcs_dir, f"glibc-{version}.tar.gz")
             if not os.path.isfile(tarball):
                 url = source_url(version)
                 print(f"[*] Downloading {url}")

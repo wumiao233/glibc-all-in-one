@@ -3,6 +3,8 @@ import os
 import urllib.request
 from dataclasses import dataclass, field
 
+from glibc_aio import paths
+
 
 @dataclass
 class SearchQuery:
@@ -29,9 +31,11 @@ def match_version_name(query: str, version_ids: list[str]) -> list[str]:
     return sorted(v for v in version_ids if q in v.lower())
 
 
-def load_version_list(path: str = "list") -> list[str]:
+def load_version_list(path: str | None = None) -> list[str]:
     """Load unified package list. Handles both new format (with [old] section
     marker) and legacy separate list/old_list files."""
+    if path is None:
+        path = str(paths.list_path())
     if not os.path.isfile(path):
         return []
     with open(path) as f:

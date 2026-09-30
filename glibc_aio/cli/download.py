@@ -9,12 +9,12 @@ from glibc_aio.identify.hashdb import index_for_hashdb
 
 def run(args) -> bool:
     try:
-        out_dir = download_single(
+        out_dir = str(download_single(
             args.id,
             mirror_name=args.mirror,
             dbg=not args.no_dbg,
             keep_deb=args.keep_deb,
-        )
+        ))
         candidates = glob.glob(f"{out_dir}/**/libc[-.]*.so*", recursive=True)
         candidates += glob.glob(f"{out_dir}/**/libc.so*", recursive=True)
         for libc in candidates:

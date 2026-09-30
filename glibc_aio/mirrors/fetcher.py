@@ -1,6 +1,7 @@
 import re
 import urllib.request
 from .sources import MIRRORS
+from .. import paths
 
 LIBC_PATTERN = re.compile(r'libc6_(2\.[0-9][0-9]-[0-9]ubuntu[0-9.]*_(?:amd64|i386))\.deb')
 
@@ -37,10 +38,11 @@ def update_list() -> None:
             fallback_ids.update(ids)
     # Dedup: fallback-only packages
     fallback_only = fallback_ids - regular_ids
-    with open("list", "w") as f:
+    target = paths.list_path()
+    with open(target, "w") as f:
         for i in sorted(regular_ids):
             f.write(i + "\n")
         f.write("[old]\n")
         for i in sorted(fallback_only):
             f.write(i + "\n")
-    print(f'[+] Saved {len(regular_ids)} + {len(fallback_only)} old packages to "list"')
+    print(f'[+] Saved {len(regular_ids)} + {len(fallback_only)} old packages to "{target}"')

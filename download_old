@@ -1,16 +1,13 @@
 #!/bin/bash
-cd "$(dirname "$0")"
-if [ ! -d "libs" ]; then
-    mkdir libs
-fi
+# Output goes to the repository root, not next to this script.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="${GLIBC_AIO_ROOT:-$SCRIPT_DIR}"
+LIBS="$ROOT/libs"
+DEBS="$ROOT/debs"
+cd "$ROOT"
+mkdir -p "$LIBS" "$DEBS"
 
-if [ ! -d "debs" ];  then
-    mkdir debs
-fi
-
-SOURCE="https://mirror.tuna.tsinghua.edu.cn/ubuntu/pool/main/g/glibc"
-# Use the source below if you feel slow, or change it on your own.
-# SOURCE="http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/"
+SOURCE="http://old-releases.ubuntu.com/ubuntu/pool/main/g/glibc"
 
 LIBC_PREFIX="libc6_"
 LIBC_DBG_PREFIX="libc6-dbg_"
@@ -30,7 +27,7 @@ download_single() {
   local deb_name=$LIBC_PREFIX$id.deb
   local dbg_name=$LIBC_DBG_PREFIX$id.deb
   echo "Getting $id"
-  if [ -d "libs/$id" ]; then
+  if [ -d "$LIBS/$id" ]; then
     die "  --> Downloaded before. Remove it to download again."
   fi
 
@@ -38,23 +35,23 @@ download_single() {
   local url="$SOURCE/$deb_name"
   echo "  -> Location: $url"
   echo "  -> Downloading libc binary package"
-  wget "$url" 2>/dev/null -O debs/$deb_name || die "Failed to download package from $url"
+  wget "$url" 2>/dev/null -O "$DEBS/$deb_name" || die "Failed to download package from $url"
   echo "  -> Extracting libc binary package"
 
-  mkdir libs/$id
-  ./extract debs/$deb_name libs/$id
-  echo "  -> Package saved to libs/$id"
+  mkdir -p "$LIBS/$id"
+  "$ROOT/extract" "$DEBS/$deb_name" "$LIBS/$id"
+  echo "  -> Package saved to $LIBS/$id"
 
   # download debug info package
   local url="$SOURCE/$dbg_name"
   echo "  -> Location: $url"
   echo "  -> Downloading libc debug package"
-  wget "$url" 2>/dev/null -O debs/$dbg_name || die "Failed to download package from $url"
+  wget "$url" 2>/dev/null -O "$DEBS/$dbg_name" || die "Failed to download package from $url"
   echo "  -> Extracting libc debug package"
 
-  mkdir libs/$id/.debug
-  ./extract debs/$dbg_name libs/$id/.debug
-  echo "  -> Package saved to libs/$id/.debug"
+  mkdir -p "$LIBS/$id/.debug"
+  "$ROOT/extract" "$DEBS/$dbg_name" "$LIBS/$id/.debug"
+  echo "  -> Package saved to $LIBS/$id/.debug"
 }
 
 if [[ $# != 1 ]]; then

@@ -1,6 +1,7 @@
 import os
 import shutil
 import urllib.request
+from glibc_aio import paths
 from glibc_aio.mirrors.sources import MIRRORS, Mirror
 from glibc_aio.packages.extractor import extract_deb
 
@@ -25,11 +26,13 @@ def download_single(version_id: str, mirror_name: str | None = None,
     if os.path.isabs(version_id) or ".." in version_id:
         raise ValueError(f"Invalid version_id: {version_id!r}")
 
-    os.makedirs("libs", exist_ok=True)
-    os.makedirs("debs", exist_ok=True)
+    libs_dir = paths.libs()
+    debs_dir = paths.debs()
+    libs_dir.mkdir(parents=True, exist_ok=True)
+    debs_dir.mkdir(parents=True, exist_ok=True)
 
-    out_dir = os.path.join("libs", version_id)
-    if os.path.isdir(out_dir):
+    out_dir = libs_dir / version_id
+    if out_dir.is_dir():
         raise FileExistsError(f"Already downloaded: {out_dir}")
 
     mirrors = resolve_mirror_order(mirror_name)
@@ -40,7 +43,7 @@ def download_single(version_id: str, mirror_name: str | None = None,
     try:
         for prefix in prefixes:
             deb_name = f"{prefix}_{version_id}.deb"
-            deb_path = os.path.join("debs", deb_name)
+            deb_path = debs_dir / deb_name
             downloaded = False
             for mirror in mirrors:
                 url = build_deb_url(mirror.url, prefix, version_id)
@@ -74,18 +77,18 @@ def download_single(version_id: str, mirror_name: str | None = None,
             if prefix == "libc6":
                 extract_deb(deb_path, out_dir)
             else:
-                dbg_dir = os.path.join(out_dir, ".debug")
+                dbg_dir = out_dir / ".debug"
                 extract_deb(deb_path, dbg_dir)
     except Exception:
-        if os.path.isdir(out_dir):
+        if out_dir.is_dir():
             shutil.rmtree(out_dir, ignore_errors=True)
         raise
 
     if not keep_deb:
         for prefix in prefixes:
             deb_name = f"{prefix}_{version_id}.deb"
-            deb_path = os.path.join("debs", deb_name)
-            if os.path.isfile(deb_path):
-                os.remove(deb_path)
+            deb_path = debs_dir / deb_name
+            if deb_path.is_file():
+                deb_path.unlink()
 
     return out_dir

@@ -1,8 +1,12 @@
 import argparse
+import fnmatch
+import glob
 import json
 import os
 import re
 import sys
+
+from glibc_aio import paths
 
 
 def _is_libc_path(s: str) -> bool:
@@ -34,6 +38,35 @@ def _is_symbol(s: str) -> bool:
     return bool(re.fullmatch(r'[a-zA-Z_*?][a-zA-Z0-9_*?]*', s))
 
 
+def _lookup_symbols(version: str, patterns: list[str]) -> list[tuple[str, list]]:
+    """Look up symbols in every downloaded libc whose id contains `version`.
+
+    Returns [(lib_id, [Symbol, ...]), ...], one entry per matched libc that
+    holds a libc file. A libc with no matching symbol is reported with an
+    empty list.
+    """
+    from glibc_aio.packages.manager import list_downloaded
+    from glibc_aio.analyze.symbols import dump_symbols
+
+    found = []
+    libs_dir = paths.libs()
+    for lib_id in sorted(d for d in list_downloaded() if version in d):
+        candidates = glob.glob(str(libs_dir / lib_id / "**" / "libc[-.]*.so*"), recursive=True)
+        candidates += glob.glob(str(libs_dir / lib_id / "**" / "libc.so*"), recursive=True)
+        if not candidates:
+            continue
+        results = list(dump_symbols(candidates[0]))
+        for pat in patterns:
+            if "*" in pat or "?" in pat:
+                results = [s for s in results if fnmatch.fnmatch(s.name, pat)]
+            else:
+                results = [s for s in results if s.name == pat]
+        found.append((lib_id, results))
+    if not found:
+        print(f"[-] No downloaded libcs matching '{version}'", file=sys.stderr)
+    return found
+
+
 def _smart_dispatch(args_list: list[str], json_output: bool) -> bool:
     files = []
     symbols = []
@@ -57,57 +90,28 @@ def _smart_dispatch(args_list: list[str], json_output: bool) -> bool:
 
     # Case: version + symbol(s) → search downloaded libcs matching version
     if version and symbols and not files and not hex_addrs:
-        from glibc_aio.packages.manager import list_downloaded
-        from glibc_aio.analyze.symbols import dump_symbols
-        libs = [d for d in list_downloaded() if version in d]
-        if not libs:
-            print(f"[-] No downloaded libcs matching '{version}'", file=sys.stderr)
+        found = _lookup_symbols(version, symbols)
+        if not found:
             return False
-        for lib_id in sorted(libs):
-            import glob
-            candidates = glob.glob(f"libs/{lib_id}/**/libc[-.]*.so*", recursive=True)
-            candidates += glob.glob(f"libs/{lib_id}/**/libc.so*", recursive=True)
-            if not candidates:
-                continue
-            libc_path = candidates[0]
-            syms = dump_symbols(libc_path)
-            results = list(syms)
-            for pat in symbols:
-                if "*" in pat or "?" in pat:
-                    import fnmatch
-                    results = [s for s in results if fnmatch.fnmatch(s.name, pat)]
-                else:
-                    results = [s for s in results if s.name == pat]
-            if json_output:
-                pass  # handled below
-            else:
+        if json_output:
+            out = {}
+            for lib_id, results in found:
+                out[lib_id] = [
+                    {"name": s.name, "addr": hex(s.addr), "type": s.type}
+                    for s in results
+                ]
+            print(json.dumps(out, indent=2))
+        else:
+            for lib_id, results in found:
                 print(f"\n{lib_id}:")
                 for s in results:
                     print(f"  {s.addr:016x}  {s.type:8s}  {s.name}")
-        if json_output:
-            out = {}
-            for lib_id in sorted(libs):
-                import glob
-                candidates = glob.glob(f"libs/{lib_id}/**/libc[-.]*.so*", recursive=True)
-                candidates += glob.glob(f"libs/{lib_id}/**/libc.so*", recursive=True)
-                if not candidates:
-                    continue
-                syms = dump_symbols(candidates[0])
-                results = list(syms)
-                for pat in symbols:
-                    if "*" in pat or "?" in pat:
-                        import fnmatch
-                        results = [s for s in results if fnmatch.fnmatch(s.name, pat)]
-                    else:
-                        results = [s for s in results if s.name == pat]
-                out[lib_id] = [{"name": s.name, "addr": hex(s.addr), "type": s.type} for s in results]
-            print(json.dumps(out, indent=2))
         return True
 
     # Case: version only → version search
     if version and not symbols and not files and not hex_addrs:
         from glibc_aio.search.searcher import match_version_name, load_version_list
-        ids = load_version_list("list")
+        ids = load_version_list()
         results = match_version_name(version, ids)
         if json_output:
             print(json.dumps(results, indent=2))

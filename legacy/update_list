@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
+import os
 import re
 import requests
+
+# Output belongs to the repository root, not to the current directory.
+ROOT = os.environ.get('GLIBC_AIO_ROOT') or os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+)
+
+
+def out_path(name):
+    return os.path.join(ROOT, name)
+
 
 common_url = 'https://mirror.tuna.tsinghua.edu.cn/ubuntu/pool/main/g/glibc/'
 # url = 'http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/'
@@ -15,17 +26,17 @@ def get_list(url, arch):
 common_list = get_list(common_url, 'amd64')
 common_list += get_list(common_url, 'i386')
 
-with open('list', 'w') as f:
+with open(out_path('list'), 'w') as f:
     for l in sorted(set(common_list)):
         f.write(l + '\n')
 
-print('[+] Common list has been save to "list"')
+print('[+] Common list has been save to "%s"' % out_path('list'))
 
 old_list = get_list(old_url, 'amd64')
 old_list += get_list(old_url, 'i386')
 
-with open('old_list', 'w') as f:
+with open(out_path('old_list'), 'w') as f:
     for l in sorted(set(old_list)):
         f.write(l + '\n')
 
-print('[+] Old-release list has been save to "old_list"')
+print('[+] Old-release list has been save to "%s"' % out_path('old_list'))

@@ -1,17 +1,19 @@
 #!/bin/bash
-cd "$(dirname "$0")"
+# Sources and build output go to the repository root, not next to this script.
+ROOT="${GLIBC_AIO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+cd "$ROOT"
 
 SOURCE="http://mirrors.ustc.edu.cn/gnu/libc"
-GLIBC_DIR="/glibc"
+GLIBC_DIR="${GLIBC_DIR:-$ROOT/glibc}"
 
 
 
-if [ ! -d "srcs" ]; then
-    mkdir srcs
+if [ ! -d "$ROOT/srcs" ]; then
+    mkdir -p "$ROOT/srcs"
 fi
 
-if [ ! -d $GLIBC_DIR ]; then
-    mkdir $GLIBC_DIR
+if [ ! -d "$GLIBC_DIR" ]; then
+    mkdir -p "$GLIBC_DIR"
 fi
 
 
@@ -29,7 +31,7 @@ usage() {
 download(){
     local filename=$1
     if [ ! -f srcs/$filename ]; then
-        wget "$SOURCE/$filename" -O "srcs/$filename"
+        wget "$SOURCE/$filename" -O "$ROOT/srcs/$filename"
     else
         echo "[?] srcs/$filename already exists. remove it to re-download. continue ? (y/[n])"
         read opt

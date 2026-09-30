@@ -1,8 +1,12 @@
 import os
 import shutil
 
+from glibc_aio import paths
 
-def list_downloaded(libs_dir: str = "libs") -> list[str]:
+
+def list_downloaded(libs_dir=None) -> list[str]:
+    if libs_dir is None:
+        libs_dir = paths.libs()
     if not os.path.isdir(libs_dir):
         return []
     return sorted(
@@ -16,8 +20,10 @@ def remove_version(path: str) -> None:
         shutil.rmtree(path)
 
 
-def get_disk_usage(libs_dir: str = "libs") -> int:
+def get_disk_usage(libs_dir=None) -> int:
     total = 0
+    if libs_dir is None:
+        libs_dir = paths.libs()
     if not os.path.isdir(libs_dir):
         return 0
     for root, dirs, files in os.walk(libs_dir):

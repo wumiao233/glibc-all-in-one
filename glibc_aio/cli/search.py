@@ -84,7 +84,7 @@ def run(args) -> bool:
         symbols[name] = addr
 
     if args.query is not None and not symbols and not args.buildid:
-        ids = load_version_list("list")
+        ids = load_version_list()
         results = match_version_name(args.query, ids)
         if args.json:
             print(json.dumps(results, indent=2))

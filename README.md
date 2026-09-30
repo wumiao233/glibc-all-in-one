@@ -262,7 +262,17 @@ old-releases
 
 ## Legacy
 
-旧版 shell 脚本在 [`legacy/`](legacy/README.md)，保留但不维护。
+不想装 Python 包、或者习惯敲脚本的话，v1 的 shell 脚本保留在仓库里可以直接用：
+
+```bash
+./legacy/update_list                    # 刷新 list / old_list
+./download 2.23-0ubuntu3_amd64          # 下载 libc + debug symbols 到 libs/
+./download_old 2.24-9ubuntu2_amd64      # 只从 old-releases 下载
+./legacy/build 2.29 i686                # 宿主机器编译 glibc
+```
+
+下载产物一律落在仓库根（`libs/`、`debs/`），不管你在哪个目录执行。
+`GLIBC_AIO_ROOT` 可以改数据目录。详见 [`legacy/README.md`](legacy/README.md)。
 
 ```
 update_list  → mirror update               list+old_list 合并为统一 list 文件

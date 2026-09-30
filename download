@@ -1,0 +1,76 @@
+#!/bin/bash
+# Output goes to the repository root, not next to this script.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="${GLIBC_AIO_ROOT:-$SCRIPT_DIR}"
+LIBS="$ROOT/libs"
+DEBS="$ROOT/debs"
+cd "$ROOT"
+mkdir -p "$LIBS" "$DEBS"
+
+# Tried in order — old releases only live on the second one.
+SOURCES=(
+  "https://mirror.tuna.tsinghua.edu.cn/ubuntu/pool/main/g/glibc"
+  "http://old-releases.ubuntu.com/ubuntu/pool/main/g/glibc"
+)
+
+LIBC_PREFIX="libc6_"
+LIBC_DBG_PREFIX="libc6-dbg_"
+
+die() {
+  echo >&2 $1
+  exit 1
+}
+
+usage() {
+  echo >&2 "Usage: $0 id"
+  exit 2
+}
+
+# Try each mirror in turn; old releases only exist on the second one.
+fetch() {
+  local name=$1 out=$2
+  local src
+  for src in "${SOURCES[@]}"; do
+    echo "  -> Location: $src/$name"
+    if wget "$src/$name" 2>/dev/null -O "$out"; then
+      return 0
+    fi
+  done
+  rm -f "$out"
+  return 1
+}
+
+download_single() {
+  local id=$1
+  local deb_name=$LIBC_PREFIX$id.deb
+  local dbg_name=$LIBC_DBG_PREFIX$id.deb
+  echo "Getting $id"
+  if [ -d "$LIBS/$id" ]; then
+    die "  --> Downloaded before. Remove it to download again."
+  fi
+
+  # download binary package
+  echo "  -> Downloading libc binary package"
+  fetch "$deb_name" "$DEBS/$deb_name" \
+    || die "  --> Failed to download $deb_name from all mirrors"
+  echo "  -> Extracting libc binary package"
+
+  mkdir -p "$LIBS/$id"
+  "$ROOT/extract" "$DEBS/$deb_name" "$LIBS/$id"
+  echo "  -> Package saved to $LIBS/$id"
+
+  # download debug info package
+  if ! fetch "$dbg_name" "$DEBS/$dbg_name"; then
+    die "  --> Failed to download $dbg_name from all mirrors"
+  fi
+  echo "  -> Extracting libc debug package"
+
+  mkdir -p "$LIBS/$id/.debug"
+  "$ROOT/extract" "$DEBS/$dbg_name" "$LIBS/$id/.debug"
+  echo "  -> Package saved to $LIBS/$id/.debug"
+}
+
+if [[ $# != 1 ]]; then
+  usage
+fi
+download_single "$1"

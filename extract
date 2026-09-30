@@ -15,25 +15,26 @@ extract() {
     local deb=`readlink -f $1`
     local out=$2
     if [ ! -d "$out" ]; then
-        mkdir $out
+        mkdir -p "$out"
     fi
     local tmp=`mktemp -d`
+    local here=$PWD
 
-    cd $tmp
+    cd "$tmp"
     ar xv $deb || die "ar failed"
     if [ -f "data.tar.zst" ];then
         tar -I zstd -xf data.tar.* || die "tar failed"
     else
         tar xf data.tar.* || die "tar failed"
     fi
-    cd -
+    cd "$here"
 
-    cp -rP $tmp/lib/*/* $out 2>/dev/null \
-      || cp -rP $tmp/lib32/* $out 2>/dev/null \
-      || cp -rP $tmp/usr/lib/*/* $out 2>/dev/null \
-      || cp -rP $tmp/usr/lib/debug/lib/*/* $out 2>/dev/null \
-      || cp -rP $tmp/usr/lib/debug/lib32/* $out 2>/dev/null \
-      || cp -rP $tmp/usr/lib/debug/.build-id $out 2>/dev/null \
+    cp -rP $tmp/lib/*/* "$out" 2>/dev/null \
+      || cp -rP $tmp/lib32/* "$out" 2>/dev/null \
+      || cp -rP $tmp/usr/lib/*/* "$out" 2>/dev/null \
+      || cp -rP $tmp/usr/lib/debug/lib/*/* "$out" 2>/dev/null \
+      || cp -rP $tmp/usr/lib/debug/lib32/* "$out" 2>/dev/null \
+      || cp -rP $tmp/usr/lib/debug/.build-id "$out" 2>/dev/null \
       || die "Failed to save. Check it manually $tmp"
 
     rm -rf $tmp
